@@ -1,5 +1,4 @@
 use crate::error::ComputorError;
-use crate::term::Term;
 use std::io;
 
 pub fn get_equation_from_stdin() -> Result<String, ComputorError> {
@@ -10,100 +9,21 @@ pub fn get_equation_from_stdin() -> Result<String, ComputorError> {
     Ok(input.trim().to_string())
 }
 
-pub fn parse_formula(formula: &str) -> Result<Vec<Term>, ComputorError> {
-    let equation_elements = formula.split_whitespace().collect::<Vec<_>>();
-    if equation_elements.is_empty() {
-        return Err(ComputorError::InputError("empty input".to_string()));
-    }
-    let mut current_polarity = 1.0;
-    let mut current_exponent = 0;
-    let mut current_value = 1.0;
-    let mut is_currently_right_side = false;
-    let mut term_vec: Vec<Term> = equation_elements
-        .iter()
-        .filter_map(|str| {
-            // println!("src = {}", str);
-            let mut term = Term::default();
-            match *str {
-                s if s.starts_with("X") => {
-                    if s.starts_with("X^") {
-                        if let Some(exponent_as_str) = s.strip_prefix("X^") {
-                            if let Ok(exponent) = exponent_as_str.parse() {
-                                current_exponent = exponent;
-                                return None;
-                            } else {
-                                return Some(Err(ComputorError::InputError(format!(
-                                    "Unable to parse power value [{}]",
-                                    exponent_as_str
-                                ))));
-                            }
-                        } else {
-                            return Some(Err(ComputorError::InputError(format!(
-                                "Invalid format [{}]",
-                                s
-                            ))));
-                        }
-                    }
-                    return None;
-                }
-                "+" => {
-                    term.current_value = current_value;
-                    term.polarity = 1.0 * current_polarity;
-                    term.exponent = current_exponent;
-                    current_polarity = 1.0;
-                    current_value = 1.0;
-                }
-                "-" => {
-                    term.polarity = 1.0 * current_polarity;
-                    term.current_value = current_value;
-                    term.exponent = current_exponent;
-                    current_value = 1.0;
-                    current_polarity = -1.0;
-                }
-                "*" => return None,
-                "=" => {
-                    term.current_value = current_value;
-                    term.exponent = current_exponent;
-                    term.polarity = 1.0 * current_polarity;
-                    current_polarity = 1.0;
-                    current_value = 1.0;
-                    is_currently_right_side = true;
-                }
-                _ => {
-                    if let Ok(val) = str.parse() {
-                        current_value = val;
-                        current_exponent = 0;
-                        return None;
-                    } else {
-                        return Some(Err(ComputorError::InputError(format!(
-                            "Invalid value [{}]",
-                            str
-                        ))));
-                    }
-                }
-            }
-            // println!("term = {:#?}", term);
-            Some(Ok(term))
-        })
-        .collect::<Result<Vec<_>, _>>()?;
-    term_vec.push(Term::new(
-        current_polarity,
-        current_exponent,
-        is_currently_right_side,
-        current_value,
-    ));
-    Ok(term_vec)
-}
+// pub fn my_sqrt(x: f64) -> f64 {
+// 	if x < 0.0 {
+// 		panic!("Cannot compute the square root of a negative number");
+// 	}
 
-pub fn reduce_polynomial_form(terms: &Vec<Term>) -> Result<Vec<f64>, ComputorError> {
-    let max_term_power = terms.iter().map(|t| t.exponent).max().unwrap_or_default();
-    if max_term_power > 2 {
-        return Err(ComputorError::CalculationError(format!(
-            "Can't solve equations with polynomial degree grater then 2. max degree found {}",
-            max_term_power
-        )));
-    }
-    let coefficients = vec![0.0; max_term_power + 1];
+// 	// Initial guess for the square root
+// 	let mut guess = x / 2.0;
 
-    Ok(coefficients)
-}
+// 	// The precision you desire
+// 	let epsilon = 1e-10;
+
+// 	// Loop until the guess is close enough to the actual square root
+// 	while (guess * guess - x).abs() > epsilon {
+// 		guess = (guess + x / guess) / 2.0;
+// 	}
+
+// 	guess
+// }

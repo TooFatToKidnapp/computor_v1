@@ -7,7 +7,7 @@ mod utils;
 use error::ComputorError;
 use solution_builder::SolutionBuilder;
 use std::env;
-use utils::{get_equation_from_stdin, parse_formula};
+use utils::get_equation_from_stdin;
 
 fn main() -> Result<(), ComputorError> {
     if env::args().len() > 2 {
@@ -15,20 +15,18 @@ fn main() -> Result<(), ComputorError> {
             "Program can only take up to one cli argument".to_string(),
         ));
     }
+
     let input = match env::args().nth(1) {
         None => get_equation_from_stdin()?,
         Some(i) => i.trim().to_string(),
     };
-    // let equation_terms = parse_formula(&input)?;
 
-    let builder = SolutionBuilder::default()
+    SolutionBuilder::default()
         .build_equation_terms(&input)?
         .build_coefficients()?
-        .build();
-    // println!("{input}");
-    // for x in equation_terms {
-    //     println!("{:?}", x);
-    // }
+        .build()
+        .solve()?
+        .log();
 
     Ok(())
 }

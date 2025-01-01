@@ -1,4 +1,8 @@
-use crate::{error::ComputorError, solution::Solution, term::Term};
+use crate::{
+    error::ComputorError,
+    solution::Solution,
+    term::{self, Term},
+};
 use std::marker::PhantomData;
 
 pub struct Locked;
@@ -116,12 +120,6 @@ impl SolutionBuilder<Locked> {
             .max()
             .unwrap_or_default();
         self.max_power_opt = Some(max_term_power);
-        if max_term_power > 2 {
-            return Err(ComputorError::CalculationError(format!(
-                "Can't solve equations with polynomial degree grater then 2. max degree found {}",
-                max_term_power
-            )));
-        }
         self.term_vec_opt = Some(term_vec);
         self.max_power_opt = Some(max_term_power);
         Ok(SolutionBuilder {
@@ -134,14 +132,25 @@ impl SolutionBuilder<Locked> {
 }
 
 impl SolutionBuilder<Unlocked> {
-    pub fn build_coefficients(mut self) -> Result<SolutionBuilder<Done>, ComputorError> {
+    pub fn build_coefficients(self) -> Result<SolutionBuilder<Done>, ComputorError> {
         let max_term_power = self.max_power_opt.unwrap();
-        let coefficients: Vec<f64> = vec![0.0; max_term_power + 1];
-        // let terms = self
+        let mut coefficients: Vec<f64> = vec![0.0; max_term_power + 1];
+
+        let term_vec = self.term_vec_opt.unwrap();
+
+        for elem in term_vec.iter() {
+            let index = elem.exponent;
+            let value = elem.current_value * elem.polarity;
+            if elem.is_right_side {
+                coefficients[index] -= value;
+            } else {
+                coefficients[index] += value;
+            }
+        }
 
         Ok(SolutionBuilder {
             state: PhantomData::<Done>,
-            term_vec_opt: self.term_vec_opt,
+            term_vec_opt: Some(term_vec),
             max_power_opt: self.max_power_opt,
             coefficients_opt: Some(coefficients),
         })
@@ -150,11 +159,11 @@ impl SolutionBuilder<Unlocked> {
 
 impl SolutionBuilder<Done> {
     pub fn build(self) -> Solution {
-        println!("Done");
         Solution {
             term_vec: self.term_vec_opt.unwrap(),
             max_power: self.max_power_opt.unwrap(),
             coefficients: self.coefficients_opt.unwrap(),
+            solution_logs: vec![],
         }
     }
 }

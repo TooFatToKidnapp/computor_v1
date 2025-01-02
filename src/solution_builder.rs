@@ -10,6 +10,7 @@ pub struct SolutionBuilder<State = Locked> {
     pub term_vec_opt: Option<Vec<Term>>,
     pub coefficients_opt: Option<Vec<f64>>,
     pub max_power_opt: Option<usize>,
+    pub solution_logs_opt: Option<Vec<String>>,
     pub state: PhantomData<State>,
 }
 
@@ -19,6 +20,7 @@ impl Default for SolutionBuilder {
             term_vec_opt: None,
             coefficients_opt: None,
             max_power_opt: None,
+            solution_logs_opt: None,
             state: PhantomData::<Locked>,
         }
     }
@@ -84,6 +86,7 @@ impl SolutionBuilder<Locked> {
                         term.current_value = current_value;
                         term.polarity = current_polarity;
                         term.exponent = current_exponent;
+                        term.is_right_side = is_currently_right_side;
                         current_polarity = 1.0;
                         current_value = 1.0;
                     }
@@ -98,6 +101,7 @@ impl SolutionBuilder<Locked> {
                         term.polarity = current_polarity;
                         term.current_value = current_value;
                         term.exponent = current_exponent;
+                        term.is_right_side = is_currently_right_side;
                         current_value = 1.0;
                         current_polarity = -1.0;
                     }
@@ -122,6 +126,7 @@ impl SolutionBuilder<Locked> {
                         term.current_value = current_value;
                         term.exponent = current_exponent;
                         term.polarity = current_polarity;
+                        term.is_right_side = is_currently_right_side;
                         current_polarity = 1.0;
                         current_value = 1.0;
                         is_currently_right_side = true;
@@ -155,14 +160,20 @@ impl SolutionBuilder<Locked> {
             .max()
             .unwrap_or_default();
 
-        self.max_power_opt = Some(max_term_power);
+        let mut solution_logs = Vec::new();
+        for x in term_vec.iter() {
+            solution_logs.push(format!("{:?}", *x));
+        }
+
         self.term_vec_opt = Some(term_vec);
         self.max_power_opt = Some(max_term_power);
+        self.solution_logs_opt = Some(solution_logs);
         Ok(SolutionBuilder {
             state: PhantomData::<Unlocked>,
             term_vec_opt: self.term_vec_opt,
             max_power_opt: self.max_power_opt,
             coefficients_opt: self.coefficients_opt,
+            solution_logs_opt: self.solution_logs_opt,
         })
     }
 }
@@ -188,6 +199,7 @@ impl SolutionBuilder<Unlocked> {
             state: PhantomData::<Done>,
             term_vec_opt: Some(term_vec),
             max_power_opt: self.max_power_opt,
+            solution_logs_opt: self.solution_logs_opt,
             coefficients_opt: Some(coefficients),
         })
     }
@@ -198,7 +210,7 @@ impl SolutionBuilder<Done> {
         Solution {
             max_power: self.max_power_opt.unwrap(),
             coefficients: self.coefficients_opt.unwrap(),
-            solution_logs: vec![],
+            solution_logs: self.solution_logs_opt.unwrap(),
         }
     }
 }

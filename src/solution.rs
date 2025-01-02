@@ -30,8 +30,7 @@ impl Solution {
     pub fn solve(mut self) -> Result<Self, ComputorError> {
         let mut max_power = self.max_power;
         let mut coefficients = self.coefficients.clone();
-
-        while !coefficients.is_empty() && coefficients[max_power as usize] == 0.0 {
+        while !coefficients.is_empty() && coefficients[max_power] == 0.0 {
             if max_power == 0 {
                 coefficients.clear()
             } else {
@@ -68,14 +67,16 @@ impl Solution {
                 Some(Ordering::Less) => {
                     let x1 = -y / (2.0 * x);
                     let x2 = delta.abs().sqrt() / (2.0 * x);
-                    self.solution_logs.push(format!("No real solutions exist, Discriminant is negative\n Complex solutions are:"));
-                    self.solution_logs.push(format!("{} + {:.6}i", x2, x1));
-                    self.solution_logs.push(format!("{} - {:.6}i", x2, x1));
+                    self.solution_logs.push(format!(
+                        "No real solutions exist, Discriminant is negative\nComplex solutions are:"
+                    ));
+                    self.solution_logs.push(format!("{} + {:.6}i", x1, x2));
+                    self.solution_logs.push(format!("{} - {:.6}i", x1, x2));
                     return Ok(self);
                 }
                 Some(Ordering::Equal) => {
                     self.solution_logs.push(format!(
-                        "Discriminant is 0.0. the solution is {}",
+                        "Discriminant is 0.0 . the solution is: {}",
                         (-y / (2.0 * x))
                     ));
                 }

@@ -1,8 +1,4 @@
-use crate::{
-    error::ComputorError,
-    solution::Solution,
-    term::{self, Term},
-};
+use crate::{error::ComputorError, solution::Solution, term::Term};
 use std::marker::PhantomData;
 
 pub struct Locked;
@@ -41,10 +37,10 @@ impl SolutionBuilder<Locked> {
         let mut current_exponent = 0;
         let mut current_value = 1.0;
         let mut is_currently_right_side = false;
+        let mut is_operator = false;
         let mut term_vec: Vec<Term> = equation_elements
             .iter()
             .filter_map(|str| {
-                // println!("src = {}", str);
                 let mut term = Term::default();
                 match *str {
                     s if s.starts_with("X") => {
@@ -52,6 +48,7 @@ impl SolutionBuilder<Locked> {
                             if let Some(exponent_as_str) = s.strip_prefix("X^") {
                                 if let Ok(exponent) = exponent_as_str.parse() {
                                     current_exponent = exponent;
+                                    is_operator = false;
                                     return None;
                                 } else {
                                     return Some(Err(ComputorError::InputError(format!(
@@ -65,28 +62,66 @@ impl SolutionBuilder<Locked> {
                                     s
                                 ))));
                             }
+                        } else if s.len() == 1 {
+                            current_exponent = 1;
+                            is_operator = false;
+                            return None;
+                        } else {
+                            return Some(Err(ComputorError::InputError(format!(
+                                "Invalid format [{}]",
+                                s
+                            ))));
                         }
-                        return None;
                     }
                     "+" => {
+                        if is_operator == true {
+                            return Some(Err(ComputorError::InputError(format!(
+                                "Out of place operator [{}]",
+                                str
+                            ))));
+                        }
+                        is_operator = true;
                         term.current_value = current_value;
-                        term.polarity = 1.0 * current_polarity;
+                        term.polarity = current_polarity;
                         term.exponent = current_exponent;
                         current_polarity = 1.0;
                         current_value = 1.0;
                     }
                     "-" => {
-                        term.polarity = 1.0 * current_polarity;
+                        if is_operator == true {
+                            return Some(Err(ComputorError::InputError(format!(
+                                "Out of place operator [{}]",
+                                str
+                            ))));
+                        }
+                        is_operator = true;
+                        term.polarity = current_polarity;
                         term.current_value = current_value;
                         term.exponent = current_exponent;
                         current_value = 1.0;
                         current_polarity = -1.0;
                     }
-                    "*" => return None,
+                    "*" => {
+                        if is_operator == true {
+                            return Some(Err(ComputorError::InputError(format!(
+                                "Out of place operator [{}]",
+                                str
+                            ))));
+                        }
+                        is_operator = true;
+                        return None;
+                    }
                     "=" => {
+                        if is_operator == true {
+                            return Some(Err(ComputorError::InputError(format!(
+                                "Out of place operator [{}]",
+                                str
+                            ))));
+                        }
+                        is_operator = true;
                         term.current_value = current_value;
                         term.exponent = current_exponent;
-                        term.polarity = 1.0 * current_polarity;
+                        term.polarity = current_polarity;
                         current_polarity = 1.0;
                         current_value = 1.0;
                         is_currently_right_side = true;
@@ -95,6 +130,7 @@ impl SolutionBuilder<Locked> {
                         if let Ok(val) = str.parse() {
                             current_value = val;
                             current_exponent = 0;
+                            is_operator = false;
                             return None;
                         } else {
                             return Some(Err(ComputorError::InputError(format!(
@@ -104,7 +140,6 @@ impl SolutionBuilder<Locked> {
                         }
                     }
                 }
-                // println!("term = {:#?}", term);
                 Some(Ok(term))
             })
             .collect::<Result<Vec<_>, _>>()?;
@@ -119,6 +154,7 @@ impl SolutionBuilder<Locked> {
             .map(|t| t.exponent)
             .max()
             .unwrap_or_default();
+
         self.max_power_opt = Some(max_term_power);
         self.term_vec_opt = Some(term_vec);
         self.max_power_opt = Some(max_term_power);
@@ -160,7 +196,6 @@ impl SolutionBuilder<Unlocked> {
 impl SolutionBuilder<Done> {
     pub fn build(self) -> Solution {
         Solution {
-            term_vec: self.term_vec_opt.unwrap(),
             max_power: self.max_power_opt.unwrap(),
             coefficients: self.coefficients_opt.unwrap(),
             solution_logs: vec![],

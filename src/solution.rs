@@ -1,10 +1,8 @@
-use crate::{error::ComputorError, term::Term};
+use crate::error::ComputorError;
 use std::cmp::Ordering;
-// use crate::utils::my_sqrt
 
 #[derive(Debug, Default)]
 pub struct Solution {
-    pub term_vec: Vec<Term>,
     pub coefficients: Vec<f64>,
     pub max_power: usize,
     pub solution_logs: Vec<String>,
@@ -15,7 +13,7 @@ impl Solution {
         if coefficients.is_empty() {
             return "The Polynomial is empty 0 = 0".to_string();
         }
-        let mut acc = String::new();
+        let mut acc = String::from("Equation reduced form: ");
         for (index, &c) in coefficients.iter().enumerate() {
             let p = index;
             if c >= 0.0 && index > 0 {
@@ -43,7 +41,6 @@ impl Solution {
                 max_power = max_power - 1;
             }
         }
-
         self.solution_logs
             .push(self.simplify_polynomial(&coefficients));
         self.solution_logs
@@ -72,8 +69,8 @@ impl Solution {
                     let x1 = -y / (2.0 * x);
                     let x2 = delta.abs().sqrt() / (2.0 * x);
                     self.solution_logs.push(format!("No real solutions exist, Discriminant is negative\n Complex solutions are:"));
-                    self.solution_logs.push(format!("{} + {:.6}i", x1, x2));
-                    self.solution_logs.push(format!("{} - {:.6}i", x1, x2));
+                    self.solution_logs.push(format!("{} + {:.6}i", x2, x1));
+                    self.solution_logs.push(format!("{} - {:.6}i", x2, x1));
                     return Ok(self);
                 }
                 Some(Ordering::Equal) => {
@@ -86,8 +83,8 @@ impl Solution {
                     let x1 = (-y + delta.sqrt()) / (2.0 * x);
                     let x2 = (-y - delta.sqrt()) / (2.0 * x);
                     self.solution_logs.push(format!(
-                        "Discriminant is positive. the solutions are\n {:.6}\n{:.6}",
-                        x1, x2
+                        "Discriminant is positive. the solutions are\n{:.6}\n{:.6}",
+                        x2, x1
                     ));
                 }
                 None => {

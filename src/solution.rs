@@ -1,4 +1,5 @@
 use crate::error::ComputorError;
+use crate::utils::{my_abs, my_sqrt};
 use std::cmp::Ordering;
 
 #[derive(Debug, Default)]
@@ -21,7 +22,7 @@ impl Solution {
             } else if c < 0.0 {
                 acc.push_str("- ");
             }
-            acc.push_str(format!("{} * X^{} ", c.abs(), p).as_str());
+            acc.push_str(format!("{} * X^{} ", my_abs(c), p).as_str());
         }
         acc.push_str("= 0");
         acc
@@ -51,42 +52,48 @@ impl Solution {
                 max_power
             )));
         } else if max_power == 2 {
-            let x = coefficients[2];
-            let y = coefficients[1];
-            let z = coefficients[0];
+            let a = coefficients[2];
+            let b = coefficients[1];
+            let c = coefficients[0];
 
-            if x == 0.0 && y == 0.0 && z == 0.0 {
+            if a == 0.0 && b == 0.0 && c == 0.0 {
                 self.solution_logs
                     .push("Every real number is a solution".to_string());
                 return Ok(self);
             }
-
-            let delta = (y * y) - ((4.0 * x) * z);
-
+            self.solution_logs
+                .push(format!("a = {} | b = {} | c = {}", a, b, c));
+            let delta = (b * b) - ((4.0 * a) * c);
+            self.solution_logs.push(format!(
+                "delta = b^2 - 4ac = {}^2 - 4 * {} * {} = {}",
+                b, a, c, delta
+            ));
             match delta.partial_cmp(&0.0) {
                 Some(Ordering::Less) => {
-                    let x1 = -y / (2.0 * x);
-                    let x2 = delta.abs().sqrt() / (2.0 * x);
-                    self.solution_logs.push(format!(
-                        "No real solutions exist, Discriminant is negative\nComplex solutions are:"
-                    ));
+                    self.solution_logs.push(format!("Delta is negative, applying the following formula: X = (-b +/- √delta) / 2a"));
+                    let x1 = -b / (2.0 * a);
+                    let x2 = my_sqrt(my_abs(delta))? / (2.0 * a);
+                    self.solution_logs
+                        .push(format!("No real solutions exist\nComplex solutions are:"));
                     self.solution_logs.push(format!("{} + {:.6}i", x1, x2));
                     self.solution_logs.push(format!("{} - {:.6}i", x1, x2));
                     return Ok(self);
                 }
                 Some(Ordering::Equal) => {
                     self.solution_logs.push(format!(
-                        "Discriminant is 0.0 . the solution is: {}",
-                        (-y / (2.0 * x))
+                        "Delta = 0, applying the following formula: X = -b / 2a"
                     ));
+                    self.solution_logs
+                        .push(format!("The solution is: {}", (-b / (2.0 * a))));
                 }
                 Some(Ordering::Greater) => {
-                    let x1 = (-y + delta.sqrt()) / (2.0 * x);
-                    let x2 = (-y - delta.sqrt()) / (2.0 * x);
                     self.solution_logs.push(format!(
-                        "Discriminant is positive. the solutions are\n{:.6}\n{:.6}",
-                        x2, x1
+                        "Delta positive, applying the following formula: X = (-b -/+ √delta) / 2a"
                     ));
+                    let x1 = (-b + my_sqrt(delta)?) / (2.0 * a);
+                    let x2 = (-b - my_sqrt(delta)?) / (2.0 * a);
+                    self.solution_logs
+                        .push(format!("The solutions are\n{:.6}\n{:.6}", x2, x1));
                 }
                 None => {
                     return Err(ComputorError::CalculationError(format!(
@@ -102,7 +109,9 @@ impl Solution {
                 return Ok(self);
             } else {
                 self.solution_logs.push(format!(
-                    "The solution is:\n{}",
+                    "The solution is:\n{} / {} = {}",
+                    -coefficients[0],
+                    coefficients[1],
                     -coefficients[0] / coefficients[1]
                 ));
                 return Ok(self);

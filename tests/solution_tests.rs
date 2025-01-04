@@ -30,6 +30,11 @@ fn test_invalid_input() {
         _ => panic!(),
     }
 
+    match SolutionBuilder::default().build_equation_terms("5 * X^2 + 2 * X^2 = 3 * X + 7 = 0") {
+        Err(ComputorError::InputError(_)) => (),
+        _ => panic!(),
+    }
+
     match SolutionBuilder::default().build_equation_terms("5 * X^-2 + 2 * X^2 + 3 * X + 7 = 0") {
         Err(ComputorError::InputError(_)) => (),
         _ => panic!(),

@@ -116,7 +116,7 @@ impl SolutionBuilder<Locked> {
                         return None;
                     }
                     "=" => {
-                        if is_operator == true {
+                        if is_operator == true || is_currently_right_side == true {
                             return Some(Err(ComputorError::InputError(format!(
                                 "Out of place operator [{}]",
                                 str

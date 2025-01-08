@@ -38,7 +38,7 @@ impl Solution {
                 coefficients.pop();
             }
             if max_power != 0 {
-                max_power = max_power - 1;
+                max_power = max_power.saturating_sub(1);
             }
         }
         self.solution_logs
@@ -47,7 +47,7 @@ impl Solution {
             .push(format!("Polynomial Degree is {}", max_power));
 
         if max_power > 2 {
-            return Err(ComputorError::CalculationError(format!(
+            return Err(ComputorError::Calculation(format!(
                 "Can't solve equations with polynomial degree grater then 2. max degree found {}",
                 max_power
             )));
@@ -70,33 +70,55 @@ impl Solution {
             ));
             match delta.partial_cmp(&0.0) {
                 Some(Ordering::Less) => {
-                    self.solution_logs.push(format!("Delta is negative, applying the following formula: X = (-b +/- √delta) / 2a"));
-                    let x1 = -b / (2.0 * a);
-                    let x2 = my_sqrt(my_abs(delta))? / (2.0 * a);
+                    self.solution_logs.push("Delta is negative, applying the following formula: X = (-b +/- √delta) / 2a".to_string());
+                    let x1 = if (-b / (2.0 * a)) != (-b / (2.0 * a)).floor() {
+                        format!("({} / {:.6})", -b, (2.0 * a))
+                    } else {
+                        format!("{:.6}", -b / (2.0 * a))
+                    };
+                    let x2 = format!("{:.6}", my_sqrt(my_abs(delta))? / (2.0 * a));
+
                     self.solution_logs
-                        .push(format!("No real solutions exist\nComplex solutions are:"));
-                    self.solution_logs.push(format!("{} + {:.6}i", x1, x2));
-                    self.solution_logs.push(format!("{} - {:.6}i", x1, x2));
+                        .push("No real solutions exist\nComplex solutions are:".to_string());
+                    self.solution_logs.push(format!("{} + {}i", x1, x2));
+                    self.solution_logs.push(format!("{} - {}i", x1, x2));
                     return Ok(self);
                 }
                 Some(Ordering::Equal) => {
-                    self.solution_logs.push(format!(
-                        "Delta = 0, applying the following formula: X = -b / 2a"
-                    ));
                     self.solution_logs
-                        .push(format!("The solution is: {}", (-b / (2.0 * a))));
+                        .push("Delta = 0, applying the following formula: X = -b / 2a".to_string());
+                    let solution = if (-b / (2.0 * a)) != (-b / (2.0 * a)).floor() {
+                        format!("{} / {:.6}", -b, (2.0 * a))
+                    } else {
+                        format!("{:.6}", (-b / (2.0 * a)))
+                    };
+                    self.solution_logs
+                        .push(format!("The solution is:\n {}", solution));
                 }
                 Some(Ordering::Greater) => {
-                    self.solution_logs.push(format!(
+                    self.solution_logs.push(
                         "Delta positive, applying the following formula: X = (-b -/+ √delta) / 2a"
-                    ));
-                    let x1 = (-b + my_sqrt(delta)?) / (2.0 * a);
-                    let x2 = (-b - my_sqrt(delta)?) / (2.0 * a);
+                            .to_string(),
+                    );
+                    let x1 = if (-b + my_sqrt(delta)?) / (2.0 * a)
+                        != ((-b + my_sqrt(delta)?) / (2.0 * a)).floor()
+                    {
+                        format!("{:.6} / {}", (-b + my_sqrt(delta)?), (2.0 * a))
+                    } else {
+                        format!("{:.6}", (-b + my_sqrt(delta)?) / (2.0 * a))
+                    };
+                    let x2 = if (-b - my_sqrt(delta)?) / (2.0 * a)
+                        != ((-b - my_sqrt(delta)?) / (2.0 * a)).floor()
+                    {
+                        format!("{:.6} / {}", (-b - my_sqrt(delta)?), (2.0 * a))
+                    } else {
+                        format!("{:.6}", (-b - my_sqrt(delta)?) / (2.0 * a))
+                    };
                     self.solution_logs
-                        .push(format!("The solutions are\n{:.6}\n{:.6}", x2, x1));
+                        .push(format!("The solutions are\n{}\n{}", x2, x1));
                 }
                 None => {
-                    return Err(ComputorError::CalculationError(format!(
+                    return Err(ComputorError::Calculation(format!(
                         "Error calculating Delta [{}]",
                         delta
                     )))
@@ -105,33 +127,36 @@ impl Solution {
         } else if max_power == 1 {
             if coefficients[0] == 0.0 && coefficients[1] == 0.0 {
                 self.solution_logs
-                    .push(format!("Every real number is a solution"));
+                    .push("Every real number is a solution".to_string());
                 return Ok(self);
             } else {
-                self.solution_logs.push(format!(
-                    "The solution is:\n{} / {} = {}",
-                    -coefficients[0],
-                    coefficients[1],
-                    -coefficients[0] / coefficients[1]
-                ));
-                return Ok(self);
-            }
-        } else {
-            if coefficients.is_empty() {
+                dbg!(-coefficients[0] / coefficients[1]);
+                dbg!((-coefficients[0] / coefficients[1]).floor());
+                let solution = if (-coefficients[0] / coefficients[1])
+                    != (-coefficients[0] / coefficients[1]).floor()
+                {
+                    format!("{} / {}", -coefficients[0], coefficients[1])
+                } else {
+                    format!("{}", (-coefficients[0] / coefficients[1]))
+                };
                 self.solution_logs
-                    .push(format!("Every real number is a solution"));
+                    .push(format!("The solution is:\n{}", solution));
                 return Ok(self);
-            } else {
-                return Err(ComputorError::CalculationError(format!(
-                    "Invalid equation. No solution found"
-                )));
             }
+        } else if coefficients.is_empty() {
+            self.solution_logs
+                .push("Every real number is a solution".to_string());
+            return Ok(self);
+        } else {
+            return Err(ComputorError::Calculation(
+                "Invalid equation. No solution found".to_string(),
+            ));
         }
 
         Ok(self)
     }
 
-    pub fn log(self) -> () {
+    pub fn log(self) {
         for log in self.solution_logs {
             println!("{log}");
         }

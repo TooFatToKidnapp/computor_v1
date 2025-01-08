@@ -26,40 +26,40 @@ fn test_third_degree_input() {
 #[test]
 fn test_invalid_input() {
     match SolutionBuilder::default().build_equation_terms("5 *X^2 + 2 * X^2 + 3 * X + 7 = 0") {
-        Err(ComputorError::InputError(_)) => (),
+        Err(ComputorError::Input(_)) => (),
         _ => panic!(),
     }
 
     match SolutionBuilder::default().build_equation_terms("5 * X^2 + 2 * X^2 = 3 * X + 7 = 0") {
-        Err(ComputorError::InputError(_)) => (),
+        Err(ComputorError::Input(_)) => (),
         _ => panic!(),
     }
 
     match SolutionBuilder::default().build_equation_terms("5 * X^-2 + 2 * X^2 + 3 * X + 7 = 0") {
-        Err(ComputorError::InputError(_)) => (),
+        Err(ComputorError::Input(_)) => (),
         _ => panic!(),
     }
 
     match SolutionBuilder::default().build_equation_terms("5 * X^-2 + 2 * X^2 + 3 * X + 7=0") {
-        Err(ComputorError::InputError(_)) => (),
+        Err(ComputorError::Input(_)) => (),
         _ => panic!(),
     }
 
     match SolutionBuilder::default()
         .build_equation_terms("5 * X^2 + 2 * X^99999999999999999999999 + 3 * X + 7 = 0")
     {
-        Err(ComputorError::InputError(_)) => (),
+        Err(ComputorError::Input(_)) => (),
         _ => panic!(),
     }
 
     match SolutionBuilder::default().build_equation_terms("5 * X^2 + + - + 2 * X^0 + 3 * X + 7 = 0")
     {
-        Err(ComputorError::InputError(_)) => (),
+        Err(ComputorError::Input(_)) => (),
         _ => panic!(),
     }
 
     match SolutionBuilder::default().build_equation_terms("5 * X^2 + 2 * X^X + 3 * X + 7 = 0") {
-        Err(ComputorError::InputError(_)) => (),
+        Err(ComputorError::Input(_)) => (),
         _ => panic!(),
     }
 }
@@ -97,7 +97,7 @@ fn test_valid_equations() {
         .build()
         .solve()
     {
-        Err(ComputorError::CalculationError(_)) => (),
+        Err(ComputorError::Calculation(_)) => (),
         _ => panic!(),
     }
     match SolutionBuilder::default()

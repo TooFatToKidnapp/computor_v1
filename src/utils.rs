@@ -7,7 +7,7 @@ pub fn get_equation_from_stdin() -> Result<String, ComputorError> {
     let mut input = String::new();
     io::stdin()
         .read_line(&mut input)
-        .map_err(ComputorError::IoError)?;
+        .map_err(ComputorError::Io)?;
     Ok(input.trim().to_string())
 }
 
@@ -24,7 +24,7 @@ where
 
 pub fn my_sqrt(x: f64) -> Result<f64, ComputorError> {
     if x < 0.0 {
-        return Err(ComputorError::CalculationError(format!(
+        return Err(ComputorError::Calculation(format!(
             "Failed compute the square root of a negative number [{}]",
             x
         )));
@@ -42,7 +42,7 @@ pub fn my_sqrt(x: f64) -> Result<f64, ComputorError> {
         guess = next_guess;
     }
 
-    Err(ComputorError::CalculationError(format!(
+    Err(ComputorError::Calculation(format!(
         "Failed to converge to a solution for the square root of [{}]",
         x
     )))

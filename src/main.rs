@@ -11,7 +11,7 @@ use utils::get_equation_from_stdin;
 
 fn main() -> Result<(), ComputorError> {
     if env::args().len() > 2 {
-        return Err(ComputorError::InputError(
+        return Err(ComputorError::Input(
             "Program can only take up to one cli argument".to_string(),
         ));
     }

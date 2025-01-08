@@ -33,7 +33,7 @@ impl SolutionBuilder<Locked> {
     ) -> Result<SolutionBuilder<Unlocked>, ComputorError> {
         let equation_elements = formula.split_whitespace().collect::<Vec<_>>();
         if equation_elements.is_empty() {
-            return Err(ComputorError::InputError("empty input".to_string()));
+            return Err(ComputorError::Input("empty input".to_string()));
         }
         let mut current_polarity = 1.0;
         let mut current_exponent = 0;
@@ -53,13 +53,13 @@ impl SolutionBuilder<Locked> {
                                     is_operator = false;
                                     return None;
                                 } else {
-                                    return Some(Err(ComputorError::InputError(format!(
+                                    return Some(Err(ComputorError::Input(format!(
                                         "Unable to parse power value [{}]",
                                         exponent_as_str
                                     ))));
                                 }
                             } else {
-                                return Some(Err(ComputorError::InputError(format!(
+                                return Some(Err(ComputorError::Input(format!(
                                     "Invalid format [{}]",
                                     s
                                 ))));
@@ -69,15 +69,15 @@ impl SolutionBuilder<Locked> {
                             is_operator = false;
                             return None;
                         } else {
-                            return Some(Err(ComputorError::InputError(format!(
+                            return Some(Err(ComputorError::Input(format!(
                                 "Invalid format [{}]",
                                 s
                             ))));
                         }
                     }
                     "+" => {
-                        if is_operator == true {
-                            return Some(Err(ComputorError::InputError(format!(
+                        if is_operator {
+                            return Some(Err(ComputorError::Input(format!(
                                 "Out of place operator [{}]",
                                 str
                             ))));
@@ -91,8 +91,8 @@ impl SolutionBuilder<Locked> {
                         current_value = 1.0;
                     }
                     "-" => {
-                        if is_operator == true {
-                            return Some(Err(ComputorError::InputError(format!(
+                        if is_operator {
+                            return Some(Err(ComputorError::Input(format!(
                                 "Out of place operator [{}]",
                                 str
                             ))));
@@ -106,8 +106,8 @@ impl SolutionBuilder<Locked> {
                         current_polarity = -1.0;
                     }
                     "*" => {
-                        if is_operator == true {
-                            return Some(Err(ComputorError::InputError(format!(
+                        if is_operator {
+                            return Some(Err(ComputorError::Input(format!(
                                 "Out of place operator [{}]",
                                 str
                             ))));
@@ -116,8 +116,8 @@ impl SolutionBuilder<Locked> {
                         return None;
                     }
                     "=" => {
-                        if is_operator == true || is_currently_right_side == true {
-                            return Some(Err(ComputorError::InputError(format!(
+                        if is_operator || is_currently_right_side {
+                            return Some(Err(ComputorError::Input(format!(
                                 "Out of place operator [{}]",
                                 str
                             ))));
@@ -132,13 +132,18 @@ impl SolutionBuilder<Locked> {
                         is_currently_right_side = true;
                     }
                     _ => {
-                        if let Ok(val) = str.parse() {
+                        if let Ok(val) = str.parse::<f64>() {
+                            if val.is_infinite() || val.is_nan() {
+                                return Some(Err(ComputorError::Input(
+                                    "Invalid number: infinity or NaN not allowed".to_string(),
+                                )));
+                            }
                             current_value = val;
                             current_exponent = 0;
                             is_operator = false;
                             return None;
                         } else {
-                            return Some(Err(ComputorError::InputError(format!(
+                            return Some(Err(ComputorError::Input(format!(
                                 "Invalid value [{}]",
                                 str
                             ))));
